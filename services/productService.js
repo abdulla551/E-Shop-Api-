@@ -5,7 +5,7 @@
 // const ApiError = require("../utils/apiError");
 // const ApiFeatures = require("../utils/apiFeatures");
 const factory = require("./handlersFactory");
-const Product = require("../models/ProductModel");
+const Product = require("../models/productModel");
 const multer = require("multer");
 const {v4: uuid4} = require("uuid"); //to generate unique id
 const asyncHandler = require("express-async-handler");

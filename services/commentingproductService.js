@@ -6,7 +6,7 @@ const slugify = require("slugify");
 const asyncHandler = require("express-async-handler");
 const ApiError = require("../utils/apiError");
 
-const Product = require("../models/ProductModel");
+const Product = require("../models/productModel");
 
 // @desc Get list of Products
 // @route GET /api/v1/products
