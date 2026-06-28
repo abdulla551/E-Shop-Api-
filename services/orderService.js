@@ -1,4 +1,4 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET);
+const stripe = require("stripe")(process.env.STRIPE_SECRET || "sk_test_dummy_key_to_prevent_crash");
 
 const asyncHandler = require("express-async-handler");
 const factory = require("./handlersFactory");
