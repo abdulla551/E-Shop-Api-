@@ -9,6 +9,7 @@ const ApiError = require("../utils/apiError");
 const Order = require("../models/orderModel");
 const Cart = require("../models/cartModel");
 const Product = require("../models/productModel");
+const User = require("../models/userModel");
 
 // @desc create  cash order
 // @route POST /api/v1/orders/:cartId
@@ -173,6 +174,48 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   res.status(200).json({status: "success", session});
 });
 
+const createOnlineCardOrder = async (session) => {
+  const cartId = session.client_reference_id;
+  const shippingAddress = session.metadata;
+  const orderPrice = session.display_items[0].amount / 100;
+
+  const cart = await Cart.findById(cartId);
+  const user = User.findOne({email: session.customer_email});
+
+  // create Order with paymentType (card)
+  const order = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress: shippingAddress,
+    totalOrderPrice: orderPrice,
+    isPaid: true,
+    paidAt: Date.now(),
+    paymentMethodType: "card",
+  });
+
+  // After creating order, we need to : decrement product quantity and increment product sold number
+  if (order) {
+    const bulkOption = cart.cartItems.map((item) => ({
+      updateOne: {
+        filter: {
+          _id: item.product,
+        },
+        update: {
+          $inc: {quantity: -item.quantity, sold: +item.quantity},
+        },
+      },
+    }));
+    await Product.bulkWrite(bulkOption, {});
+
+    // clear user Cart depend on cartId
+    await Cart.findByIdAndDelete(cartId);
+  }
+};
+
+// @desc this webhook will run when stripe payment successfully paid
+// @route POST /webhook-checkout
+// @access Private/user
+
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   const sig = req.headers["stripe-signature"];
 
@@ -188,7 +231,9 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
     return res.status(400).send(`webhool Error: ${err.message}`);
   }
   if (event.type === "checkout.session.completed") {
-    console.log("Create Order Here");
-    console.log(event.data.object.client_reference_id);
+    // create Order
+    createOnlineCardOrder(event.data.object);
   }
+
+  res.status(200).json({received: true});
 });
