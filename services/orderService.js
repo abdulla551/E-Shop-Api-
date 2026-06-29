@@ -180,7 +180,7 @@ const createOnlineCardOrder = async (session) => {
   const orderPrice = session.amount_total / 100;
 
   const cart = await Cart.findById(cartId);
-  const user = User.findOne({email: session.customer_email});
+  const user = await User.findOne({email: session.customer_email});
 
   // create Order with paymentType (card)
   const order = await Order.create({
