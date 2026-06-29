@@ -15,6 +15,7 @@ const dbConnection = require("./config/database");
 
 // Routes
 const mountRoutes = require("./routes/index");
+const {webhookCheckout} = require("./services/orderService");
 // const categoryRoute = require("./routes/categoryRoute");
 // const subcategoryRoute = require("./routes/subCategoryRoute");
 // const brandRoute = require("./routes/brandRoute");
@@ -39,6 +40,13 @@ app.options(/.*/, cors());
 
 // compress all Responses
 app.use(compression());
+
+// checkout webhook
+app.post(
+  "/webhook-checkout",
+  express.raw({type: "application/json"}),
+  webhookCheckout,
+);
 
 app.set("query parser", "extended");
 

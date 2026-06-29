@@ -1,4 +1,6 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET || "sk_test_dummy_key_to_prevent_crash");
+const stripe = require("stripe")(
+  process.env.STRIPE_SECRET || "sk_test_dummy_key_to_prevent_crash",
+);
 
 const asyncHandler = require("express-async-handler");
 const factory = require("./handlersFactory");
@@ -169,4 +171,23 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 
   //  4- send session to Response
   res.status(200).json({status: "success", session});
+});
+
+exports.webhookCheckout = asyncHandler(async (req, res, next) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET,
+    );
+  } catch (err) {
+    return res.status(400).send(`webhool Error: ${err.message}`);
+  }
+  if (event.type === "checkout.session.completed") {
+    console.log("Create Order Here");
+  }
 });
